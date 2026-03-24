@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import create_engine, text
 from urllib.parse import quote_plus
 
-SUPA_PASSWORD = quote_plus("Rajasekhar@06")
+SUPA_PASSWORD = quote_plus("Rajasekhar06")
 SUPA_URL = f"postgresql://postgres:{SUPA_PASSWORD}@db.fvaiszwssclfhldaqvfi.supabase.co:5432/postgres"
 
 supa_engine = create_engine(SUPA_URL)

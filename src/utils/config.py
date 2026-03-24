@@ -1,4 +1,4 @@
-"""
+﻿"""
 TalentScope AI — Configuration
 """
 
@@ -20,7 +20,6 @@ def get_config(key, default=""):
         return os.getenv(key, default)
 
 
-# Try single DATABASE_URL first, fall back to individual parts
 _db_url = get_config("DATABASE_URL", "")
 
 if _db_url:

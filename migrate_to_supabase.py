@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 LOCAL_URL = "postgresql://talentscope:talentscope123@127.0.0.1:5432/talentscope_db"
 
-SUPA_PASSWORD = quote_plus("Rajasekhar@06")
+SUPA_PASSWORD = quote_plus("Rajasekhar06")
 SUPA_URL = f"postgresql://postgres:{SUPA_PASSWORD}@db.fvaiszwssclfhldaqvfi.supabase.co:5432/postgres"
 
 local_engine = create_engine(LOCAL_URL)
