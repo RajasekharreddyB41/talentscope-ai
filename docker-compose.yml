@@ -1,0 +1,23 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16
+    container_name: talentscope-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-talentscope}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-talentscope123}
+      POSTGRES_DB: ${POSTGRES_DB:-talentscope_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./src/database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U talentscope -d talentscope_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environment
+venv/
+.venv/
+env/
+
+# Environment variables
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data files (keep structure, ignore large files)
+data/raw/*.json
+data/raw/*.csv
+data/processed/*.csv
+data/kaggle/*.csv
+*.parquet
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/*.ipynb_checkpoints/
+
+# Docker
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# MLflow
+mlruns/
+mlartifacts/
+
+# Airflow
+airflow/logs/
+airflow/airflow.db
+#kaggle datasets and models (ignore large files, but keep structure)
+data/kaggle/*.csv
+data/kaggle/*.zip
+data/models/*.pkl
