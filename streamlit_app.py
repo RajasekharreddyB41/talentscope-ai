@@ -8,9 +8,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
 
-# TEMP DEBUG
-st.sidebar.write("DB URL:", os.getenv("DATABASE_URL", "NOT SET")[:35] if os.getenv("DATABASE_URL") else "NOT SET")
-
 st.set_page_config(
     page_title="TalentScope AI",
     page_icon="🎯",
@@ -24,7 +21,6 @@ st.title("🎯 TalentScope AI")
 st.markdown("**Real-Time Job Market Intelligence Platform**")
 st.markdown("---")
 
-# Safe database connection
 try:
     engine = get_engine()
     with engine.connect() as conn:
@@ -40,12 +36,7 @@ try:
     col4.metric("Cities", f"{total_cities:,}")
 
 except Exception as e:
-    st.warning("⚠️ Database not connected yet — app is live but data is loading.")
-    col1, col2, col3, col4 = st.columns(4)
-    col1.metric("Total Jobs", "—")
-    col2.metric("Companies", "—")
-    col3.metric("With Salary Data", "—")
-    col4.metric("Cities", "—")
+    st.warning(f"⚠️ Database error: {e}")
 
 st.markdown("---")
 st.markdown("""
