@@ -6,6 +6,7 @@ dist/
 build/
 .eggs/
 *.egg
+*.pyc
 
 # Virtual environment
 venv/
@@ -50,3 +51,6 @@ airflow/airflow.db
 data/kaggle/*.csv
 data/kaggle/*.zip
 data/models/*.pkl
+
+
+.streamlit/secrets.toml
