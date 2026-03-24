@@ -1,20 +1,29 @@
 """
 TalentScope AI — Configuration
-Loads environment variables for the entire application.
 """
 
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
-# Database
+# Try Streamlit secrets first, then .env
+def get_config(key, default=""):
+    try:
+        import streamlit as st
+        return st.secrets.get(key, os.getenv(key, default))
+    except:
+        return os.getenv(key, default)
+
 DB_CONFIG = {
-    "host": os.getenv("POSTGRES_HOST", "127.0.0.1"),
-    "port": int(os.getenv("POSTGRES_PORT", 5432)),
-    "user": os.getenv("POSTGRES_USER", "talentscope"),
-    "password": os.getenv("POSTGRES_PASSWORD", "talentscope123"),
-    "database": os.getenv("POSTGRES_DB", "talentscope_db"),
+    "host": get_config("POSTGRES_HOST", "127.0.0.1"),
+    "port": int(get_config("POSTGRES_PORT", "5432")),
+    "user": get_config("POSTGRES_USER", "talentscope"),
+    "password": get_config("POSTGRES_PASSWORD", "talentscope123"),
+    "database": get_config("POSTGRES_DB", "talentscope_db"),
 }
 
 DATABASE_URL = (
@@ -22,10 +31,8 @@ DATABASE_URL = (
     f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
 
-# API Keys
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY", "")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+RAPIDAPI_KEY = get_config("RAPIDAPI_KEY", "")
+GROQ_API_KEY = get_config("GROQ_API_KEY", "")
 
-# App
-APP_ENV = os.getenv("APP_ENV", "development")
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+APP_ENV = get_config("APP_ENV", "development")
+LOG_LEVEL = get_config("LOG_LEVEL", "INFO")
