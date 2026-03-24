@@ -3,6 +3,7 @@ TalentScope AI — Configuration
 """
 
 import os
+from urllib.parse import quote_plus
 
 try:
     from dotenv import load_dotenv
@@ -10,7 +11,6 @@ try:
 except ImportError:
     pass
 
-# Try Streamlit secrets first, then .env
 def get_config(key, default=""):
     try:
         import streamlit as st
@@ -26,8 +26,9 @@ DB_CONFIG = {
     "database": get_config("POSTGRES_DB", "talentscope_db"),
 }
 
+# URL-encode password to handle special characters
 DATABASE_URL = (
-    f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}"
+    f"postgresql://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
     f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
 )
 
