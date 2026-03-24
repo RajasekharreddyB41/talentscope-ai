@@ -11,6 +11,7 @@ try:
 except ImportError:
     pass
 
+
 def get_config(key, default=""):
     try:
         import streamlit as st
@@ -18,22 +19,33 @@ def get_config(key, default=""):
     except:
         return os.getenv(key, default)
 
-DB_CONFIG = {
-    "host": get_config("POSTGRES_HOST", "127.0.0.1"),
-    "port": int(get_config("POSTGRES_PORT", "5432")),
-    "user": get_config("POSTGRES_USER", "talentscope"),
-    "password": get_config("POSTGRES_PASSWORD", "talentscope123"),
-    "database": get_config("POSTGRES_DB", "talentscope_db"),
-}
 
-# URL-encode password to handle special characters
-DATABASE_URL = (
-    f"postgresql://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
-    f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
-)
+# Try single DATABASE_URL first, fall back to individual parts
+_db_url = get_config("DATABASE_URL", "")
+
+if _db_url:
+    # Fix prefix if needed
+    if _db_url.startswith("postgresql://"):
+        DATABASE_URL = _db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    elif _db_url.startswith("postgres://"):
+        DATABASE_URL = _db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    else:
+        DATABASE_URL = _db_url
+else:
+    # Fall back to individual parts
+    DB_CONFIG = {
+        "host": get_config("POSTGRES_HOST", "127.0.0.1"),
+        "port": int(get_config("POSTGRES_PORT", "5432")),
+        "user": get_config("POSTGRES_USER", "talentscope"),
+        "password": get_config("POSTGRES_PASSWORD", "talentscope123"),
+        "database": get_config("POSTGRES_DB", "talentscope_db"),
+    }
+    DATABASE_URL = (
+        f"postgresql+psycopg2://{quote_plus(DB_CONFIG['user'])}:{quote_plus(DB_CONFIG['password'])}"
+        f"@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+    )
 
 RAPIDAPI_KEY = get_config("RAPIDAPI_KEY", "")
 GROQ_API_KEY = get_config("GROQ_API_KEY", "")
-
 APP_ENV = get_config("APP_ENV", "development")
 LOG_LEVEL = get_config("LOG_LEVEL", "INFO")
