@@ -8,6 +8,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import streamlit as st
 
+# TEMP DEBUG
+st.sidebar.write("DB URL:", os.getenv("DATABASE_URL", "NOT SET")[:35] if os.getenv("DATABASE_URL") else "NOT SET")
+
 st.set_page_config(
     page_title="TalentScope AI",
     page_icon="🎯",
