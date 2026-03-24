@@ -1,4 +1,3 @@
-import sys
-import os
-sys.path.insert(0, os.path.dirname(__file__))
-exec(open("debug_config.py").read())
+import streamlit as st
+
+st.write("App is running!")
