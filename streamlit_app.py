@@ -4,6 +4,7 @@ TalentScope AI — Streamlit Cloud Entry Point
 
 import sys
 import os
+import re
 import streamlit as st
 
 # Add project root to path
@@ -29,13 +30,25 @@ pages = {
 # Sidebar navigation
 selection = st.sidebar.radio("Navigate", list(pages.keys()))
 
-# Load selected page (skip set_page_config in sub-pages)
+# Load selected page
 page_path = pages[selection]
 if os.path.exists(page_path):
-    with open(page_path, "r") as f:
+    with open(page_path, "r", encoding="utf-8") as f:
         code = f.read()
-    # Remove set_page_config from sub-pages (already set above)
-    code = code.replace("st.set_page_config(", "# st.set_page_config(")
-    exec(code)
+
+    # Remove full st.set_page_config(...) block from sub-pages
+    code = re.sub(
+        r"st\.set_page_config\s*\(.*?\)\s*",
+        "",
+        code,
+        flags=re.DOTALL,
+    )
+
+    # Execute cleaned page code
+    exec_globals = {
+        "__name__": "__main__",
+        "__file__": page_path,
+    }
+    exec(code, exec_globals)
 else:
     st.error(f"Page not found: {page_path}")
