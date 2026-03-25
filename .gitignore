@@ -54,3 +54,9 @@ data/models/*.pkl
 
 
 .streamlit/secrets.toml
+
+
+.env
+airflow.cfg
+*.db
+__pycache__/git add .
