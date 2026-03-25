@@ -16,7 +16,7 @@ def get_config(key, default=""):
     try:
         import streamlit as st
         return st.secrets.get(key, os.getenv(key, default))
-    except:
+    except Exception:
         return os.getenv(key, default)
 
 
