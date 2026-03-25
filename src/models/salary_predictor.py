@@ -15,6 +15,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import LabelEncoder
 from src.database.connection import get_engine
 from src.utils.logger import get_logger
+from xgboost import XGBRegressor
 
 logger = get_logger("models.salary")
 
@@ -108,8 +109,21 @@ def train_models():
     rf.fit(X_train, y_train)
     rf_metrics = evaluate_model("Random Forest", rf, X_test, y_test)
 
+    # ---- Model 3: XGBoost ----
+    xgb = XGBRegressor(
+        n_estimators=200,
+        max_depth=6,
+        learning_rate=0.1,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        random_state=42,
+        verbosity=0,
+    )
+    xgb.fit(X_train, y_train)
+    xgb_metrics = evaluate_model("XGBoost", xgb, X_test, y_test)
+
     # ---- Results Comparison ----
-    results = pd.DataFrame([lr_metrics, rf_metrics])
+    results = pd.DataFrame([lr_metrics, rf_metrics, xgb_metrics])
 
     print("\n" + "=" * 60)
     print("SALARY PREDICTION — MODEL COMPARISON")
@@ -118,13 +132,13 @@ def train_models():
     print(f"Features: {feature_cols}\n")
     print(results.to_string(index=False))
 
-    # ---- Feature Importance (Random Forest) ----
+    # ---- Feature Importance (XGBoost) ----
     importance = pd.DataFrame({
         "feature": feature_cols,
-        "importance": rf.feature_importances_
+        "importance": xgb.feature_importances_
     }).sort_values("importance", ascending=False)
 
-    print(f"\n--- Feature Importance (Random Forest) ---")
+    print(f"\n--- Feature Importance (XGBoost) ---")
     for _, row in importance.iterrows():
         bar = "█" * int(row["importance"] * 50)
         print(f"  {row['feature']:20s}: {row['importance']:.3f} {bar}")
@@ -133,15 +147,20 @@ def train_models():
     os.makedirs(MODEL_DIR, exist_ok=True)
 
     # Pick best model by MAE
-    best_model = rf if rf_metrics["MAE"] < lr_metrics["MAE"] else lr
-    best_name = "Random Forest" if rf_metrics["MAE"] < lr_metrics["MAE"] else "Linear Regression"
+    all_models = [
+        ("Linear Regression", lr, lr_metrics),
+        ("Random Forest", rf, rf_metrics),
+        ("XGBoost", xgb, xgb_metrics),
+    ]
+    best_name, best_model, best_metrics = min(all_models, key=lambda x: x[2]["MAE"])
 
     model_package = {
         "model": best_model,
         "le_loc": le_loc,
         "le_title": le_title,
         "feature_cols": feature_cols,
-        "metrics": rf_metrics if best_name == "Random Forest" else lr_metrics,
+        "metrics": best_metrics,
+        "all_results": results.to_dict("records"),
     }
 
     model_path = os.path.join(MODEL_DIR, "salary_model.pkl")
@@ -150,6 +169,7 @@ def train_models():
 
     logger.info(f"Best model saved: {best_name} -> {model_path}")
     print(f"\n✓ Best model: {best_name} (saved to {model_path})")
+    print(f"  MAE: ${best_metrics['MAE']:,} | RMSE: ${best_metrics['RMSE']:,} | R²: {best_metrics['R2']}")
 
     return results
 

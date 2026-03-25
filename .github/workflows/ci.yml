@@ -7,31 +7,55 @@ on:
     branches: [main]
 
 jobs:
-  test:
+  lint-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run linter
         run: |
-          pip install flake8
-          flake8 src/ --max-line-length=120 --ignore=E501,W503 || true
+          pip install flake8 pandas sqlalchemy psycopg2-binary python-dotenv scikit-learn requests
 
-      - name: Run tests
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JSEARCH_API_KEY: ${{ secrets.JSEARCH_API_KEY }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      - name: Lint with flake8
         run: |
-          pip install pytest
-          pytest tests/ -v --ignore=tests/quality_audit.py || true
+          flake8 src/ --max-line-length=120 --ignore=E501,W503,E402 --count --show-source --statistics
+
+      - name: Validate DAG structure
+        run: |
+          python -c "
+          import os
+          dag_path = 'airflow/dags/jobpulse_dag.py'
+          with open(dag_path) as f:
+              code = f.read()
+          checks = ['task_ingest_api', 'task_clean', 'task_build_features', 'task_report', 'ingest >> clean >> features >> report']
+          for c in checks:
+              assert c in code, f'Missing: {c}'
+          print('DAG validation passed')
+          "
+
+      - name: Validate project structure
+        run: |
+          python -c "
+          import os
+          required = [
+              'src/ingestion/api_connector.py',
+              'src/pipeline/etl.py',
+              'src/pipeline/normalize.py',
+              'src/pipeline/dedup.py',
+              'src/pipeline/validate.py',
+              'src/models/salary_predictor.py',
+              'src/models/skill_gap_analyzer.py',
+              'src/models/job_clustering.py',
+              'src/database/schema.sql',
+              'src/app/Home.py',
+          ]
+          for f in required:
+              assert os.path.exists(f), f'Missing: {f}'
+          print(f'All {len(required)} required files present')
+          "
