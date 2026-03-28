@@ -177,13 +177,23 @@ def train_models():
 def predict_salary(skill_count: int, experience: str, location_tier: str, title_category: str) -> dict:
     """
     Predict salary for given inputs.
+    Trains the model automatically if not found.
     
     Returns: {"predicted_min": float, "predicted_mid": float, "predicted_max": float}
     """
     model_path = os.path.join(MODEL_DIR, "salary_model.pkl")
 
+    # Auto-train if model doesn't exist
     if not os.path.exists(model_path):
-        logger.error("Model not found. Run train_models() first.")
+        logger.info("Model not found, training automatically...")
+        try:
+            train_models()
+        except Exception as e:
+            logger.error(f"Auto-train failed: {e}")
+            return None
+
+    if not os.path.exists(model_path):
+        logger.error("Model still not found after training attempt")
         return None
 
     with open(model_path, "rb") as f:
