@@ -25,6 +25,7 @@ pages = {
     "🧠 Skill Gap Analyzer": "src/app/pages/3_Skill_Gap_Analyzer.py",
     "🗺️ Job Clusters": "src/app/pages/4_Job_Clusters.py",
     "⚙️ Pipeline Monitor": "src/app/pages/5_Pipeline_Monitor.py",
+    "🏆 Top Skills by Role": "src/app/pages/6_Top_Skills.py",
 }
 
 # Sidebar navigation
