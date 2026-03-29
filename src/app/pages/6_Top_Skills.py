@@ -40,7 +40,7 @@ try:
             index=0,
         )
     with col2:
-        job_count = roles_df[roles_df["title_category"] == selected_role]["job_count"].values[0]
+        job_count = int(roles_df[roles_df["title_category"] == selected_role]["job_count"].values[0])
         st.metric("Jobs in this category", f"{job_count:,}")
 
     st.markdown("---")
