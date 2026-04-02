@@ -144,7 +144,57 @@ def pipeline_health() -> pd.DataFrame:
         GROUP BY pipeline_name
         ORDER BY total_runs DESC
     """)
+def skill_trend_momentum(top_n: int = 10) -> pd.DataFrame:
+    """Skill demand trend: this week vs last week, with WoW growth rate."""
+    return run_query("""
+        WITH this_week AS (
+            SELECT skill, COUNT(*) as cnt
+            FROM job_features f
+            JOIN clean_jobs c ON c.id = f.clean_job_id,
+            UNNEST(f.skills) AS skill
+            WHERE c.posted_date >= CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY skill
+        ),
+        last_week AS (
+            SELECT skill, COUNT(*) as cnt
+            FROM job_features f
+            JOIN clean_jobs c ON c.id = f.clean_job_id,
+            UNNEST(f.skills) AS skill
+            WHERE c.posted_date >= CURRENT_DATE - INTERVAL '14 days'
+              AND c.posted_date < CURRENT_DATE - INTERVAL '7 days'
+            GROUP BY skill
+        )
+        SELECT 
+            COALESCE(t.skill, l.skill) AS skill,
+            COALESCE(t.cnt, 0) AS this_week,
+            COALESCE(l.cnt, 0) AS last_week,
+            COALESCE(t.cnt, 0) - COALESCE(l.cnt, 0) AS change,
+            CASE 
+                WHEN COALESCE(l.cnt, 0) > 0 
+                THEN ROUND((COALESCE(t.cnt, 0) - l.cnt) * 100.0 / l.cnt, 1)
+                ELSE NULL
+            END AS wow_pct
+        FROM this_week t
+        FULL OUTER JOIN last_week l ON t.skill = l.skill
+        WHERE COALESCE(t.cnt, 0) + COALESCE(l.cnt, 0) >= 5
+        ORDER BY COALESCE(t.cnt, 0) DESC
+        LIMIT :top_n
+    """, {"top_n": top_n})
 
+
+def daily_posting_trend() -> pd.DataFrame:
+    """Daily job posting counts for the last 14 days."""
+    return run_query("""
+        SELECT 
+            posted_date::DATE AS date,
+            COUNT(*) AS jobs_posted,
+            COUNT(CASE WHEN salary_min IS NOT NULL THEN 1 END) AS with_salary
+        FROM clean_jobs
+        WHERE posted_date >= CURRENT_DATE - INTERVAL '14 days'
+          AND posted_date IS NOT NULL
+        GROUP BY posted_date::DATE
+        ORDER BY date
+    """)
 
 if __name__ == "__main__":
     print("=== TalentScope AI — Analytics Preview ===\n")
