@@ -239,6 +239,73 @@ def get_available_roles() -> list:
             ORDER BY cnt DESC
         """))
         return [row[0] for row in result]
+def compute_skill_impact_scores(user_skills: list, target_role: str = None) -> list:
+    """
+    Compute Skill Impact Score = Demand × Gap Priority.
+    
+    Returns a ranked list of skills with actionable priority levels:
+    - Skills you HAVE: marked as covered
+    - Skills you're MISSING: scored by (demand_pct × gap_weight)
+    """
+    gap = analyze_skill_gap(user_skills, target_role)
+    if "error" in gap:
+        return []
+
+    user_skills_lower = [s.lower().strip() for s in user_skills]
+
+    if target_role:
+        role_skills = get_skills_by_role(target_role)
+    else:
+        role_skills = get_market_skills()
+
+    if not role_skills:
+        return []
+
+    max_demand = max(role_skills.values()) if role_skills else 1
+    results = []
+
+    for skill, demand in role_skills.items():
+        demand_pct = round(demand / max_demand * 100, 1)
+
+        if skill in user_skills_lower:
+            results.append({
+                "skill": skill,
+                "demand": demand,
+                "demand_pct": demand_pct,
+                "status": "have",
+                "gap_weight": 0,
+                "impact_score": 0,
+                "priority": "✅ Covered",
+            })
+        else:
+            gap_weight = demand_pct / 100
+            impact_score = round(demand_pct * gap_weight, 1)
+
+            if demand_pct >= 60:
+                priority = "🔥 Critical"
+            elif demand_pct >= 30:
+                priority = "⚡ Important"
+            elif demand_pct >= 15:
+                priority = "📌 Useful"
+            else:
+                priority = "💡 Nice to have"
+
+            results.append({
+                "skill": skill,
+                "demand": demand,
+                "demand_pct": demand_pct,
+                "status": "missing",
+                "gap_weight": round(gap_weight, 2),
+                "impact_score": impact_score,
+                "priority": priority,
+            })
+
+    missing = sorted([r for r in results if r["status"] == "missing"],
+                     key=lambda x: x["impact_score"], reverse=True)
+    covered = sorted([r for r in results if r["status"] == "have"],
+                     key=lambda x: x["demand"], reverse=True)
+
+    return missing[:15] + covered[:10]
 
 
 if __name__ == "__main__":
