@@ -144,6 +144,8 @@ def pipeline_health() -> pd.DataFrame:
         GROUP BY pipeline_name
         ORDER BY total_runs DESC
     """)
+
+
 def skill_trend_momentum(top_n: int = 10) -> pd.DataFrame:
     """Skill demand trend: this week vs last week, with WoW growth rate."""
     return run_query("""
@@ -195,6 +197,7 @@ def daily_posting_trend() -> pd.DataFrame:
         GROUP BY posted_date::DATE
         ORDER BY date
     """)
+
 
 if __name__ == "__main__":
     print("=== TalentScope AI — Analytics Preview ===\n")
