@@ -12,7 +12,7 @@ from datetime import datetime
 from sqlalchemy import text
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from sklearn.preprocessing import LabelEncoder
 from src.database.connection import get_engine
@@ -244,16 +244,41 @@ def train_models():
     except Exception as e:
         logger.warning(f"SHAP computation skipped: {e}")
 
+    # ---- Quantile regression for confidence intervals ----
+    logger.info("Training quantile models for 90% confidence intervals...")
+    quantile_lower = GradientBoostingRegressor(
+        loss="quantile", alpha=0.05,
+        n_estimators=200, max_depth=5, learning_rate=0.08,
+        min_samples_leaf=5, random_state=42,
+    )
+    quantile_upper = GradientBoostingRegressor(
+        loss="quantile", alpha=0.95,
+        n_estimators=200, max_depth=5, learning_rate=0.08,
+        min_samples_leaf=5, random_state=42,
+    )
+    quantile_lower.fit(X_train, y_train)
+    quantile_upper.fit(X_train, y_train)
+
+    # Sanity check on test set
+    q_lower_pred = quantile_lower.predict(X_test)
+    q_upper_pred = quantile_upper.predict(X_test)
+    coverage = ((y_test >= q_lower_pred) & (y_test <= q_upper_pred)).mean()
+    logger.info(f"Quantile 90% interval coverage on test: {coverage:.1%}")
+    print(f"\n✓ Confidence interval coverage (target 90%): {coverage:.1%}")
+
     model_package = {
         "model": best_model,
+        "quantile_lower": quantile_lower,
+        "quantile_upper": quantile_upper,
         "le_loc": le_loc,
         "le_title": le_title,
         "feature_cols": feature_cols,
         "metrics": best_metrics,
         "all_results": results.to_dict("records"),
         "top_skills": TOP_SKILLS,
-        "version": "v2",
+        "version": "v2.1",
         "shap_data": shap_data,
+        "quantile_coverage": round(float(coverage), 3),
     }
 
     model_path = os.path.join(MODEL_DIR, "salary_model.pkl")
@@ -335,6 +360,23 @@ def predict_salary(skill_count: int, experience: str, location_tier: str,
 
     predicted_mid = model.predict(X)[0]
 
+    # Real confidence intervals from quantile models (fallback to ±15% for old pickles)
+    q_lower_model = pkg.get("quantile_lower")
+    q_upper_model = pkg.get("quantile_upper")
+    if q_lower_model is not None and q_upper_model is not None:
+        predicted_low = float(q_lower_model.predict(X)[0])
+        predicted_high = float(q_upper_model.predict(X)[0])
+        # Safety: ensure ordering (quantile crossing can occasionally happen)
+        if predicted_low > predicted_high:
+            predicted_low, predicted_high = predicted_high, predicted_low
+        confidence_source = "quantile_regression"
+        confidence_level = 0.90
+    else:
+        predicted_low = predicted_mid * 0.85
+        predicted_high = predicted_mid * 1.15
+        confidence_source = "heuristic"
+        confidence_level = None
+
     # Feature contributions (approximate via feature importance)
     # SHAP-based contributions
     contributions = {}
@@ -352,12 +394,14 @@ def predict_salary(skill_count: int, experience: str, location_tier: str,
                 contributions[readable] = round(imp * 100, 1)
 
     return {
-        "predicted_min": round(predicted_mid * 0.85),
+        "predicted_min": round(predicted_low),
         "predicted_mid": round(predicted_mid),
-        "predicted_max": round(predicted_mid * 1.15),
+        "predicted_max": round(predicted_high),
         "model_version": pkg.get("version", "v1"),
         "model_name": pkg["metrics"]["model"],
         "contributions": contributions,
+        "confidence_source": confidence_source,
+        "confidence_level": confidence_level,
     }
 
 

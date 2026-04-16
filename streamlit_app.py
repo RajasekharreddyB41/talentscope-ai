@@ -24,6 +24,7 @@ pages = {
     "💰 Salary Predictor": "src/app/pages/2_Salary_Predictor.py",
     "🧠 Skill Gap Analyzer": "src/app/pages/3_Skill_Gap_Analyzer.py",
     "🗺️ Job Clusters": "src/app/pages/4_Job_Clusters.py",
+    "💼 Browse Jobs": "src/app/pages/5_Browse_Jobs.py",
     "⚙️ Pipeline Monitor": "src/app/pages/5_Pipeline_Monitor.py",
     "🏆 Top Skills by Role": "src/app/pages/6_Top_Skills.py",
 }

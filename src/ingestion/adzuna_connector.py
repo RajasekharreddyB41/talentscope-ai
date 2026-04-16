@@ -94,9 +94,11 @@ def transform_to_common_format(adzuna_job: dict) -> dict:
         "job_max_salary": salary_max,
         "job_salary_period": "yearly" if salary_min and salary_min > 1000 else "",
         "job_posted_at_datetime_utc": adzuna_job.get("created", ""),
-        "job_apply_link": adzuna_job.get("redirect_url", ""),
-        "job_is_remote": "remote" in adzuna_job.get("title", "").lower()
-                         or "remote" in adzuna_job.get("description", "").lower(),
+        "job_apply_link": adzuna_job.get("redirect_url") or adzuna_job.get("url", ""),
+        "job_is_remote": (
+            "remote" in adzuna_job.get("title", "").lower()
+            or "remote" in adzuna_job.get("description", "").lower()
+        ),
         "job_employment_type": adzuna_job.get("contract_type", ""),
         "job_source": "adzuna",
         # Keep original for raw_jobs
@@ -136,6 +138,7 @@ if __name__ == "__main__":
         print(f"Location: {sample['job_city']}, {sample['job_state']}")
         print(f"Remote:   {sample['job_is_remote']}")
         print(f"Salary:   {sample['job_min_salary']} - {sample['job_max_salary']}")
+        print(f"Apply:    {sample['job_apply_link']}")
         print(f"Posted:   {sample['job_posted_at_datetime_utc']}")
         print(f"\nTotal jobs fetched: {len(raw_jobs)}")
     else:
