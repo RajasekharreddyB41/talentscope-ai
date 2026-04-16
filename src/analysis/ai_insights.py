@@ -21,6 +21,8 @@ from src.utils.logger import get_logger
 # Load .env from project root
 load_dotenv()
 
+logger = get_logger("analysis.ai_insights")
+
 try:
     from groq import Groq
     HAS_GROQ = True
@@ -236,4 +238,4 @@ if __name__ == "__main__":
     ))
 
     print("\n" + "=" * 60)
-    print("Groq available:" , HAS_GROQ and _get_client() is not None)
+    print("Groq available:", HAS_GROQ and _get_client() is not None)

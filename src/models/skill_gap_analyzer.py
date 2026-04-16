@@ -239,6 +239,8 @@ def get_available_roles() -> list:
             ORDER BY cnt DESC
         """))
         return [row[0] for row in result]
+
+
 def compute_skill_impact_scores(user_skills: list, target_role: str = None) -> list:
     """
     Compute Skill Impact Score = Demand × Gap Priority.
