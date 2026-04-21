@@ -31,7 +31,6 @@ def _register_scrapers():
     Lazy-load scrapers so import errors in one scraper
     don't break the entire pipeline.
     """
-    global SCRAPER_REGISTRY
 
     try:
         from src.ingestion.greenhouse_scraper import GreenhouseScraper, DEFAULT_COMPANIES as GH_COMPANIES

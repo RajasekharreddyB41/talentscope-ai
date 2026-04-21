@@ -159,8 +159,8 @@ class SmartRecruitersScraper(BaseScraper):
         sections = job_ad.get("sections") or {}
 
         # Try these sections in order of usefulness
-        for key in ("jobDescription", "qualifications", "additionalInformation",
-                     "companyDescription"):
+        for key in ("jobDescription", "qualifications",
+                    "additionalInformation", "companyDescription"):
             section = sections.get(key) or {}
             text = (section.get("text") or "").strip()
             if text:
