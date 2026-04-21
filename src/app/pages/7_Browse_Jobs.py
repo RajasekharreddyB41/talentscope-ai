@@ -186,9 +186,9 @@ if selected_locations:
 
 # Remote
 if remote_filter == "Remote Only":
-    df = df[df["is_remote"] == True]
+    df = df[df["is_remote"].fillna(False).astype(bool)]
 elif remote_filter == "Not Remote":
-    df = df[df["is_remote"] != True]
+    df = df[~df["is_remote"].fillna(False).astype(bool)]
 
 # Experience
 if selected_exp:
