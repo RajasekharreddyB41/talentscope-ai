@@ -162,10 +162,11 @@ if selected_locations:
     df = df[df["location_state"].isin(selected_locations)]
 
 # Remote
+# Remote
 if remote_filter == "Remote Only":
-    df = df[df["is_remote"] == True]
+    df = df[df["is_remote"] is True]
 elif remote_filter == "Not Remote":
-    df = df[df["is_remote"] == False]
+    df = df[df["is_remote"] is not True]
 
 # Experience
 if selected_exp:
