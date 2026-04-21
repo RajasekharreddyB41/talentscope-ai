@@ -59,4 +59,5 @@ data/models/*.pkl
 .env
 airflow.cfg
 *.db
-__pycache__/git add .
+__pycache__/git add .data/h1b_employers.csv
+data/h1b_employers.csv

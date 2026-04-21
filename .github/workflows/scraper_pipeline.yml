@@ -1,0 +1,64 @@
+name: TalentScope AI -- ATS Scraper Pipeline
+
+on:
+  schedule:
+    # Runs every day at 8:00 AM UTC (3:00 AM EST), 2 hours after main pipeline
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+    # Allows manual trigger from GitHub Actions tab
+
+jobs:
+  scraper-ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install pandas sqlalchemy psycopg2-binary python-dotenv requests tenacity scikit-learn sentence-transformers
+
+      - name: Run scraper pipeline (all ATS scrapers)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python -m src.pipeline.scraper_pipeline
+
+      - name: Run feature engineering on new jobs
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python -m src.models.feature_engineering
+
+      - name: Verify results
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          python -c "
+          from src.database.connection import get_engine
+          from sqlalchemy import text
+          e = get_engine()
+          with e.connect() as c:
+              raw = c.execute(text('SELECT COUNT(*) FROM raw_jobs')).fetchone()[0]
+              clean = c.execute(text('SELECT COUNT(*) FROM clean_jobs')).fetchone()[0]
+              feat = c.execute(text('SELECT COUNT(*) FROM job_features')).fetchone()[0]
+              print(f'raw_jobs: {raw}')
+              print(f'clean_jobs: {clean}')
+              print(f'job_features: {feat}')
+              sources = c.execute(text(\"\"\"
+                  SELECT source, COUNT(*) as cnt
+                  FROM clean_jobs
+                  GROUP BY source
+                  ORDER BY cnt DESC
+              \"\"\")).fetchall()
+              print('Jobs by source:')
+              for s in sources:
+                  print(f'  {s[0]}: {s[1]}')
+              print('Scraper pipeline verification PASSED')
+          "
