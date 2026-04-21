@@ -93,6 +93,22 @@ tier_options = st.sidebar.multiselect(
 )
 
 st.sidebar.markdown("---")
+# Freshness filter
+freshness_options = {
+    "Last 24 hours": 1,
+    "Last 3 days": 3,
+    "Last 10 days": 10,
+    "Last 30 days": 30,
+    "All jobs": 9999,
+}
+selected_freshness = st.sidebar.selectbox(
+    "Posted within",
+    options=list(freshness_options.keys()),
+    index=2,
+)
+freshness_days = freshness_options[selected_freshness]
+
+st.sidebar.markdown("---")
 st.sidebar.subheader("Job Details")
 
 # Role / title search
@@ -141,6 +157,12 @@ selected_sources = st.sidebar.multiselect(
 
 df = df_all.copy()
 
+# Freshness filter
+if freshness_days < 9999:
+    df["posted_date"] = pd.to_datetime(df["posted_date"], errors="coerce")
+    cutoff = pd.Timestamp.now() - pd.Timedelta(days=freshness_days)
+    df = df[df["posted_date"] >= cutoff]
+
 # OPT filter
 if selected_opt_values:
     df = df[df["opt_status"].isin(selected_opt_values)]
@@ -161,12 +183,12 @@ if company_search:
 if selected_locations:
     df = df[df["location_state"].isin(selected_locations)]
 
-# Remote
+
 # Remote
 if remote_filter == "Remote Only":
-    df = df[df["is_remote"] is True]
+    df = df[df["is_remote"] == True]
 elif remote_filter == "Not Remote":
-    df = df[df["is_remote"] is not True]
+    df = df[df["is_remote"] != True]
 
 # Experience
 if selected_exp:
